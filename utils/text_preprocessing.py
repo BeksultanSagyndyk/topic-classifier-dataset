@@ -12,7 +12,7 @@ import string
 import re
 import requests
 import pandas as pd
-from nltk.corpus import stopwords
+import nltk
 
 #punctuations
 PUNCT_TO_REMOVE = string.punctuation + '“”’'
