@@ -2,15 +2,43 @@ from nltk.tokenize import word_tokenize
 from nltk.stem import WordNetLemmatizer
 
 lemmatizer = WordNetLemmatizer()
+
+from pymystem3 import Mystem
+mystem = Mystem()
+
 import numpy as np
 import multiprocessing as mp
 import string
 import re
 import requests
 import pandas as pd
+from nltk.corpus import stopwords
 
+#punctuations
 PUNCT_TO_REMOVE = string.punctuation + '“”’'
 
+# en stopwords
+# STOPWORDS = set(nltk.corpus.stopwords.words('english')+['','bought','buy','fit'])
+PATH = "https://gist.githubusercontent.com\
+/rg089/35e00abf8941d72d419224cfd5b5925d\
+/raw/12d899b70156fd0041fa9778d657330b024\
+b959c/stopwords.txt"
+stopwords_list = requests.get(PATH).content
+english_stopwords = set(stopwords_list.decode().splitlines() + ['', 'bought', 'buy', 'fit', 'good'])
+
+# russian stopwords
+russian_stopwords = set(nltk.corpus.stopwords.words('russian'))
+
+#emoticons
+EMOTICONS = np.load('./emoticons.npy',
+                    allow_pickle='TRUE').item()
+
+#top search words google
+with open('./google-10000-english/google-10000-english-no-swears.txt', 'r') as f:
+    top1000 = f.readlines()
+top1000 = [i.strip() for i in top1000]
+top1000 = top1000[:1000]
+top1000_set = set(top1000)
 
 def remove_punctuation(text: str) -> str:
     '''
@@ -21,32 +49,14 @@ def remove_punctuation(text: str) -> str:
 
     return text.translate(str.maketrans(PUNCT_TO_REMOVE, ' ' * len(PUNCT_TO_REMOVE)))
 
-
-# STOPWORDS = set(nltk.corpus.stopwords.words('english')+['','bought','buy','fit'])
-PATH = "https://gist.githubusercontent.com\
-/rg089/35e00abf8941d72d419224cfd5b5925d\
-/raw/12d899b70156fd0041fa9778d657330b024\
-b959c/stopwords.txt"
-stopwords_list = requests.get(PATH).content
-STOPWORDS = set(stopwords_list.decode().splitlines() + ['', 'bought', 'buy', 'fit', 'good'])
-
-EMOTICONS = np.load('./emoticons.npy',
-                    allow_pickle='TRUE').item()
-with open('./google-10000-english/google-10000-english-no-swears.txt', 'r') as f:
-    top1000 = f.readlines()
-top1000 = [i.strip() for i in top1000]
-top1000 = top1000[:1000]
-top1000_set = set(top1000)
-
-
-def remove_stopwords(text: str) -> str:
+def remove_stopwords(text: str, stopwords: set) -> str:
     '''
     This function removes stopwords from input text
     :param text: str
     :return: str
     '''
     return " ".join([word for word in str(
-        text).split() if word.lower() not in STOPWORDS])
+        text).split() if word.lower() not in stopwords])
 
 
 def remove_emoji(text: str) -> str:
@@ -147,17 +157,20 @@ def tokenize_(text: str) -> str:
     return ' '.join(word_tokenize(text))
 
 
-def lemma_(text: str) -> str:
+def lemm(text: str, lang: str) -> str:
     """
     This function lemmatize every token from input text data
     :param text: str
+    :lang: str, 'en' or 'ru'
     :return: str
     """
-    text = text.split(' ')
-    text = [lemmatizer.lemmatize(word) for word in text]
+    if lang == 'en':
+        text = text.split(' ')
+        text = [lemmatizer.lemmatize(word) for word in text]
+    if lang == 'ru':
+        text = mystem.lemmatize(text.lower())
     text = ' '.join(text)
     return text
-
 
 def main_preprocessor(text):
     """
@@ -178,8 +191,8 @@ def main_preprocessor(text):
 
     text = text.lower()
     text = tokenize_(text)
-    text = remove_stopwords(text)
-    text = lemma_(text)
+    text = remove_stopwords(text,english_stopwords)
+    text = lemm(text,'en')
     text = remove_stopwords(text)
     # text = remove_top_1000_google(text)
 
