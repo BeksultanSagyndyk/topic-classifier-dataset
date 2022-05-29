@@ -212,8 +212,4 @@ def main(df: pd.DataFrame, col1: str, col2: str) -> pd.DataFrame:
         df[col2] = pool.map(main_preprocessor, df[col1])
     print('text preprocessed')
 
-    # df = df.drop_duplicates()
-    # df = df[df.topic.isna() == False]
-    # df = df[df.text.isna() == False]
-
     return df
