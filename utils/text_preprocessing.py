@@ -168,7 +168,7 @@ def lemm(text: str, lang: str) -> str:
         text = text.split(' ')
         text = [lemmatizer.lemmatize(word) for word in text]
     if lang == 'ru':
-        text = mystem.lemmatize(text.lower())
+        text = mystem.lemmatize(text)
     text = ' '.join(text)
     return text
 
